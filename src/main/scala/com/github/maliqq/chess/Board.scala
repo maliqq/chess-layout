@@ -56,6 +56,15 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   }.toArray
 
   def get(x: Int, y: Int): Option[Piece] = matrix(x)(y)
+  def hasPiece(x: Int, y: Int, other: Piece): Boolean = get(x, y).map { piece =>
+    piece.equals(other)
+  }.getOrElse(false)
+
+  def equals(other: Board): Boolean = {
+    pieces.size == other.pieces.size && pieces.forall { case (piece, (x, y)) =>
+      other.hasPiece(x, y, piece)
+    }
+  }
 
   def put(x: Int, y: Int, piece: Piece): Boolean = {
     if (isTaken(x, y) || isAimed(x, y)) return false

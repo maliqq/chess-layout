@@ -45,6 +45,10 @@ object Pieces {
 
     def white = '♕'
     def black = '♛'
+    override def equals(other: Any) = other match {
+      case _: Queen => true
+      case _ => false
+    }
   }
 
   object Rook {
@@ -55,6 +59,10 @@ object Pieces {
 
     def white = '♖'
     def black = '♜'
+    override def equals(other: Any) = other match {
+      case _: Rook => true
+      case _ => false
+    }
   }
 
   object Bishop {
@@ -65,6 +73,10 @@ object Pieces {
 
     def white = '♗'
     def black = '♝'
+    override def equals(other: Any) = other match {
+      case _: Bishop => true
+      case _ => false
+    }
   }
 
   object Knight {}
@@ -88,6 +100,10 @@ object Pieces {
 
     def white = '♘'
     def black = '♞'
+    override def equals(other: Any) = other match {
+      case _: Knight => true
+      case _ => false
+    }
   }
 
 }

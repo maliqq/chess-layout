@@ -15,6 +15,8 @@ class Layout(val board: Board) {
             }
             Some(b)
           } else None
+        }.foldRight(List[Board]()) { case (b, uniq) =>
+         if (uniq.exists(_.equals(b))) uniq else b :: uniq
         }
       case None => return List.empty
     }
