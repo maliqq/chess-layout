@@ -40,7 +40,10 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   }
   val pieces: collection.mutable.Map[Piece, Position] = collection.mutable.Map.empty
 
+  def isValid(x: Int, y: Int) = x >= 0 && y >= 0 && x < m && y < n
+  def isEmpty(x: Int, y: Int) = matrix(x)(y).isEmpty
   def isTaken(x: Int, y: Int) = matrix(x)(y).isDefined
+  def get(x: Int, y: Int): Option[Piece] = matrix(x)(y)
 
   def size = m * n
   def pieceNum = pieces.size
@@ -51,11 +54,10 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
     for {
       x <- 0 to m - 1;
       y <- 0 to n - 1
-      if (!isTaken(x, y) && !isAimed(x, y))
+      if (isEmpty(x, y) && !isAimed(x, y))
     } yield((x, y))
   }.toArray
 
-  def get(x: Int, y: Int): Option[Piece] = matrix(x)(y)
   def hasPiece(x: Int, y: Int, other: Piece): Boolean = get(x, y).map { piece =>
     piece.equals(other)
   }.getOrElse(false)
@@ -74,7 +76,7 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
     true
   }
 
-  def canPut(x: Int, y: Int) = isValid(x, y) && !isTaken(x, y) && !isAimed(x, y)
+  def canPut(x: Int, y: Int) = isValid(x, y) && isEmpty(x, y) && !isAimed(x, y)
 
   def aim(x: Int, y: Int, piece: Piece) {
     piece match {
@@ -113,9 +115,5 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
       aim(x, y, piece)
     }
   }
-
-  def isValid(x: Int, y: Int) = x >= 0 && y >= 0 && x < m && y < n
-
-  def isEmpty(x: Int, y: Int) = matrix(x)(y).isEmpty
 
 }
