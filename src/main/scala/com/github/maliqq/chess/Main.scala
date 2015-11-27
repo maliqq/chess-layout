@@ -5,7 +5,7 @@ object Main {
     import Pieces._
 
     var board = new Board(6, 9)
-    var pieces = List[Piece](new King(), new Queen(), new Queen(), new Rook(), new Bishop(), new Knight())
+    var pieces = List[Piece](King(), Queen(), Queen(), Rook(), Bishop(), Knight())
 
     if (args.size == 2) {
       val Array(boardSize, piecesStr, _*) = args
@@ -16,6 +16,12 @@ object Main {
 
     val layout = new Layout(board)
     val boards = layout.place(pieces)
+
+    if (boards.size == 0) {
+      Console println("There is no solution")
+      return
+    }
+
     Console printf("Solution with %s layouts (including symmetric)\n", boards.size)
 
     val n = 5

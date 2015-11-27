@@ -7,4 +7,5 @@ trait Aiming { b: Board =>
     Array.fill(n) { false }
   }
   def isAimed(x: Int, y: Int) = aimedColumns(x) || aimedRows(y) || aimedCells(x)(y)
+  def notAimingAnyone(x: Int, y: Int, piece: Piece) = piece.moves(x, y, this).forall { case (x, y) => isEmpty(x, y) }
 }

@@ -13,78 +13,54 @@ object Pieces {
   def parse(s: String): Seq[Piece] = {
     s.toCharArray.map { char =>
       char match {
-        case 'K' | 'k' => new King()
-        case 'Q' | 'q' => new Queen()
-        case 'R' | 'r' => new Rook()
-        case 'B' | 'b' => new Bishop()
-        case 'S' | 's' | 'N' | 'n' => new Knight()
+        case 'K' | 'k' => King()
+        case 'Q' | 'q' => Queen()
+        case 'R' | 'r' => Rook()
+        case 'B' | 'b' => Bishop()
+        case 'S' | 's' | 'N' | 'n' => Knight()
       }
     }
   }
 
-  object King {
-  }
-  sealed class King extends Piece {
+  sealed case class King extends Piece {
     def weight = 8
     def moves(x: Int, y: Int, board: Board) = {
       for {
         moveX <- (x - 1) to (x + 1);
         moveY <- (y - 1) to (y + 1)
-        if (!(moveX == x && moveY == y) && board.canPut(moveX, moveY))
+        if (!(moveX == x && moveY == y) && board.isValid(moveX, moveY))
       } yield((moveX, moveY))
     }.toArray
 
     def white = '♔'
     def black = '♚'
-    override def equals(other: Any) = other match {
-      case _: King => true
-      case _ => false
-    }
   }
 
-  object Queen {}
-  sealed class Queen extends Piece with Moves.Diagonal with Moves.Direct {
+  sealed case class Queen extends Piece with Moves.Diagonal with Moves.Direct {
     def weight = 10
     def moves(x: Int, y: Int, board: Board) = directMove(x, y, board) ++ diagonalMove(x, y, board)
 
     def white = '♕'
     def black = '♛'
-    override def equals(other: Any) = other match {
-      case _: Queen => true
-      case _ => false
-    }
   }
 
-  object Rook {
-  }
-  sealed class Rook extends Piece with Moves.Direct {
+  sealed case class Rook extends Piece with Moves.Direct {
     def weight = 9
     def moves(x: Int, y: Int, board: Board) = directMove(x, y, board)
 
     def white = '♖'
     def black = '♜'
-    override def equals(other: Any) = other match {
-      case _: Rook => true
-      case _ => false
-    }
   }
 
-  object Bishop {
-  }
-  sealed class Bishop extends Piece with Moves.Diagonal {
+  sealed case class Bishop extends Piece with Moves.Diagonal {
     def weight = 9
     def moves(x: Int, y: Int, board: Board) = diagonalMove(x, y, board)
 
     def white = '♗'
     def black = '♝'
-    override def equals(other: Any) = other match {
-      case _: Bishop => true
-      case _ => false
-    }
   }
 
-  object Knight {}
-  sealed class Knight extends Piece {
+  sealed case class Knight extends Piece {
     def weight = 7
     final val Moves = Array[Position](
         (2, 1), (2, -1),
@@ -98,16 +74,12 @@ object Pieces {
         (offsetX, offsetY) <- Moves;
         moveX = offsetX + x;
         moveY = offsetY + y
-        if board.canPut(moveX, moveY)
+        if board.isValid(moveX, moveY)
       ) yield((moveX, moveY))
     }.toArray
 
     def white = '♘'
     def black = '♞'
-    override def equals(other: Any) = other match {
-      case _: Knight => true
-      case _ => false
-    }
   }
 
 }

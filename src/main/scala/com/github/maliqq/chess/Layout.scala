@@ -5,31 +5,32 @@ class Layout(val board: Board) {
 
   type Path = List[Tuple2[Position, Piece]]
   def place(pieces: List[Piece]): List[Board] = {
-    place(List.empty, pieces.sortBy(_.weight).reverse) match {
+    place(pieces.size, List.empty, pieces.sortBy(_.weight).reverse) match {
       case Some(paths) =>
-        return paths.flatMap { path =>
-          if (path.size == pieces.size) {
-            val b = new Board(board.m, board.n)
-            path.foreach { case ((x, y), piece) =>
-              b.put(x, y, piece)
-            }
-            Some(b)
-          } else None
+        paths.map { path =>
+          val b = new Board(board.m, board.n)
+          path.foreach { case ((x, y), piece) => b.put(x, y, piece) }
+          b
         }.foldRight(List[Board]()) { case (b, uniq) =>
          if (uniq.exists(_.equals(b))) uniq else b :: uniq
         }
-      case None => return List.empty
+      case None => List.empty
     }
   }
 
-  def place(path: Path, pieces: List[Piece]): Option[List[Path]] = {
-    if (pieces.isEmpty) return Some(List(path))
+  def place(numReach: Int, path: Path, pieces: List[Piece]): Option[List[Path]] = {
+    if (pieces.isEmpty) {
+      if (path.size != numReach) return None
+      else return Some(List(path))
+    }
     if (board.isFull) return None
+
     val piece = pieces.head
     Some(
       board.emptyCells.foldLeft[List[Path]](List.empty) { case (result, (x, y)) =>
-        if (board.put(x, y, piece)) {
-          place(Tuple2((x, y), piece) :: path, pieces.tail) match {
+        if (board.canPut(x, y, piece)) {
+          board.put(x, y, piece)
+          place(numReach, Tuple2((x, y), piece) :: path, pieces.tail) match {
             case None =>
               board.reset(x, y)
               result
