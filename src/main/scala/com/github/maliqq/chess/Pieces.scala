@@ -36,6 +36,10 @@ object Pieces {
 
     def white = '♔'
     def black = '♚'
+    override def equals(other: Any) = other match {
+      case _: King => true
+      case _ => false
+    }
   }
 
   object Queen {}
