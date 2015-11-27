@@ -32,17 +32,49 @@ trait AsciiPrint {
   }
 }
 
+case class Put(x: Int, y: Int, piece: Piece)
+
+class RawBoard(val m: Int, val n: Int, p: Path) extends AsciiPrint {
+  private val size = m * n
+  private val matrix: Array[Option[Piece]] = Array.fill(size) { None }
+  private def set(x: Int, y: Int, piece: Piece) {
+    matrix(x * m + y) = Some(piece)
+  }
+  p.foreach { case ((x, y), piece) =>
+    set(x, y, piece)
+  }
+  lazy val index: String = {
+    val s = new StringBuilder
+    def buildString(x: Int, y: Int) = get(x, y) match {
+      case Some(piece) => s.append(piece.black)
+      case None => s.append('-')
+    }
+    val flat = for {
+      x <- 0 to m - 1;
+      y <- 0 to n - 1
+    } yield(buildString(x, y))
+    s.toString
+  }
+  
+  def isAimed(x: Int, y: Int) = false
+  
+  def get(x: Int, y: Int): Option[Piece] = matrix(x * m + y)
+  
+  def equals(other: RawBoard) = index == other.index
+}
+
 class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   private val matrix: Array[Array[Option[Piece]]] = Array.fill(m) {
     Array.fill(n) { None }
   }
-  case class Put(x: Int, y: Int, piece: Piece)
   val pieces: collection.mutable.ListBuffer[Put] = collection.mutable.ListBuffer()
 
   def isValid(x: Int, y: Int) = x >= 0 && y >= 0 && x < m && y < n
   def isEmpty(x: Int, y: Int) = matrix(x)(y).isEmpty
+  def allEmpty(moves: Array[Position]) = moves.forall { case (x, y) => isEmpty(x, y) }
   def isTaken(x: Int, y: Int) = matrix(x)(y).isDefined
   def get(x: Int, y: Int): Option[Piece] = matrix(x)(y)
+  def set(x: Int, y: Int, piece: Piece) { matrix(x)(y) = Some(piece) }
 
   def size = m * n
   def pieceNum = pieces.size
@@ -51,8 +83,8 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
 
   def emptyCells = {
     for {
-      x <- 0 to m - 1;
-      y <- 0 to n - 1
+      y <- 0 to n - 1;
+      x <- 0 to m - 1
       if (isEmpty(x, y) && !isAimed(x, y))
     } yield((x, y))
   }.toArray
@@ -61,44 +93,40 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
     piece == other
   }.getOrElse(false)
 
-  def equals(other: Board): Boolean = {
-    pieces.size == other.pieces.size && pieces.forall { case Put(x, y, piece) =>
-      other.hasPiece(x, y, piece)
-    }
-  }
-
-  def put(x: Int, y: Int, piece: Piece) {
+  def put(x: Int, y: Int, piece: Piece, moves: Array[Position]): Boolean = {
+    if (!canPut(x, y, moves)) return false
     matrix(x)(y) = Some(piece)
     pieces += Put(x, y, piece)
-    aim(x, y, piece)
+    aim(x, y, piece, moves)
+    true
   }
 
-  def canPut(x: Int, y: Int, piece: Piece) = isEmpty(x, y) && !isAimed(x, y) && notAimingAnyone(x, y, piece)
-
-  def aim(x: Int, y: Int, piece: Piece) {
+  def reset(x: Int, y: Int, moves: Array[Position]) {
+    val piece: Piece = matrix(x)(y).get
+    matrix(x)(y) = None
     piece match {
       case _: Moves.Direct =>
-        aimedColumns(x) = true
-        aimedRows(y) = true
+        aimedColumns(x).decr()
+        aimedRows(y).decr()
       case _ =>
     }
-    piece.moves(x, y, this).foreach { case (x, y) =>
-      aimedCells(x)(y) = true
+    pieces.remove(pieces.indexOf(Put(x, y, piece)))
+    moves.foreach { case (x, y) =>
+      aimedCells(x)(y).decr()
     }
   }
 
-  def reset(x: Int, y: Int) {
-    val piece: Piece = matrix(x)(y).get
-    pieces.remove(pieces.indexOf(Put(x, y, piece)))
-    matrix(x)(y) = None
-    aimedColumns(x) = false
-    aimedRows(y) = false
-    for {
-      x <- 0 to m - 1;
-      y <- 0 to n - 1
-    } aimedCells(x)(y) = false
-    pieces.foreach { case Put(x, y, piece) =>
-      aim(x, y, piece)
+  def canPut(x: Int, y: Int, moves: Array[Position]) = isEmpty(x, y) && !isAimed(x, y) && allEmpty(moves)
+
+  def aim(x: Int, y: Int, piece: Piece, moves: Array[Position]) {
+    piece match {
+      case _: Moves.Direct =>
+        aimedColumns(x).incr()
+        aimedRows(y).incr()
+      case _ =>
+    }
+    moves.foreach { case (x, y) =>
+      aimedCells(x)(y).incr()
     }
   }
 
