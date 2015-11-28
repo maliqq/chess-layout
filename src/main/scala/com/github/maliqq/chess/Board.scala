@@ -32,13 +32,10 @@ trait AsciiPrint {
   }
 }
 
-case class Put(x: Int, y: Int, piece: Piece)
-
 class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   private val matrix: Array[Array[Option[Piece]]] = Array.fill(m) {
     Array.fill(n) { None }
   }
-  val pieces: collection.mutable.ListBuffer[Put] = collection.mutable.ListBuffer()
 
   def isValid(x: Int, y: Int) = x >= 0 && y >= 0 && x < m && y < n
   def isEmpty(x: Int, y: Int) = matrix(x)(y).isEmpty
@@ -48,7 +45,6 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   def set(x: Int, y: Int, piece: Piece) { matrix(x)(y) = Some(piece) }
 
   def size = m * n
-  def pieceNum = pieces.size
   def emptyNum = emptyCells.size
   def isFull = emptyNum == 0
 
@@ -67,7 +63,6 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   def put(x: Int, y: Int, piece: Piece, moves: Array[Position]): Boolean = {
     if (!canPut(x, y, moves)) return false
     matrix(x)(y) = Some(piece)
-    pieces += Put(x, y, piece)
     aim(x, y, piece, moves)
     true
   }
@@ -81,7 +76,6 @@ class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
         aimedRows(y).decr()
       case _ =>
     }
-    pieces.remove(pieces.indexOf(Put(x, y, piece)))
     moves.foreach { case (x, y) =>
       aimedCells(x)(y).decr()
     }

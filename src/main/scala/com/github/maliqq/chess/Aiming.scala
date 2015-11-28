@@ -14,8 +14,8 @@ trait Aiming { b: Board =>
     def booleanValue: Boolean = n > 0
   }
 
-  protected val aimedColumns: collection.mutable.ListBuffer[Counter] = collection.mutable.ListBuffer.fill(m) { new Counter }
-  protected val aimedRows: collection.mutable.ListBuffer[Counter] = collection.mutable.ListBuffer.fill(n) { new Counter }
+  protected val aimedColumns: Array[Counter] = Array.fill(m) { new Counter }
+  protected val aimedRows: Array[Counter] = Array.fill(n) { new Counter }
   protected val aimedCells: Array[Array[Counter]] = Array.fill(m) {
     Array.fill(n) { new Counter }
   }

@@ -6,7 +6,7 @@ object Main {
     import Pieces._
 
     var (m, n) = (6, 9)
-    var pieces = List[Piece](King(), Queen(), Queen(), Rook(), Bishop(), Knight())
+    var pieces = List[Piece](King(), King(), Queen(), Rook(), Bishop(), Knight())
 
     if (args.size == 2) {
       val Array(boardSize, piecesStr, _*) = args

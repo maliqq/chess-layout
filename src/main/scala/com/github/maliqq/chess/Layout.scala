@@ -1,8 +1,6 @@
 package com.github.maliqq.chess
 
 class Layout(m: Int, n: Int) {
-  class NoSolutionException extends Exception
-
   import collection.JavaConversions._
   import java.util.concurrent._
 
@@ -26,7 +24,7 @@ class Layout(m: Int, n: Int) {
           val copy = new Board(m, n)
           val moves = piece.moves(x, y, copy)
           copy.put(x, y, piece, moves)
-          val count = worker(copy, List(((x, y), piece)), pieces.tail)
+          val count = place(copy, List(((x, y), piece)), pieces.tail)
           counter.addAndGet(count)
           done.countDown()
         }
@@ -38,29 +36,26 @@ class Layout(m: Int, n: Int) {
     counter.get()
   }
 
-  def worker(board: Board, path: Path, pieces: List[Piece]) = {
-    def place(board: Board, path: Path, pieces: List[Piece]): Int = {
-      val piece = pieces.head
-      val ((prevx, prevy), prev) = path.head
-      val empty = board.emptyCells
-      empty.foldLeft[Int](0) { case (count, (x, y)) =>
+  def place(board: Board, path: Path, pieces: List[Piece]): Int = {
+    val piece = pieces.head
+    val ((prevx, prevy), prev) = path.head
+    board.emptyCells.foldLeft[Int](0) { case (count, (x, y)) =>
+      if (piece == prev && x * n + y < prevx * n + prevy) count // skip
+      else {
         val moves = piece.moves(x, y, board)
-        val newPath = ((x, y), piece) :: path
-        if (piece == prev && x * n + y < prevx * n + prevy) count // skip
-        else if (board.put(x, y, piece, moves)) {
+        if (board.put(x, y, piece, moves)) {
           try {
             if (pieces.tail.isEmpty)
               count + 1 // no pieces left
             else if (board.isFull)
               count
             else
-              count + place(board, newPath, pieces.tail)
+              count + place(board, ((x, y), piece) :: path, pieces.tail)
           } finally {
             board.reset(x, y, moves)
           }
         } else count
       }
     }
-    place(board, path, pieces)
   }
 }
