@@ -6,15 +6,19 @@ class Layout(m: Int, n: Int) {
   import collection.JavaConversions._
   import java.util.concurrent._
 
-  lazy val workersNum = Runtime.getRuntime().availableProcessors()
-  lazy val pool = Executors.newFixedThreadPool(workersNum)
+  lazy val threadsNum = Runtime.getRuntime().availableProcessors()
+  lazy val pool = Executors.newFixedThreadPool(threadsNum)
 
-  def place(pieces: List[Piece]): List[Path] = {
+  def sort(pieces: List[Piece]) = pieces.sortBy(_.weight).reverse
+
+  def place(_pieces: List[Piece]): Int = {
+    val pieces = sort(_pieces)
+
     val board = new Board(m, n)
     val piece = pieces.head
-    val q = new LinkedBlockingQueue[List[Path]]()
     val empty = board.emptyCells
 
+    val counter = new atomic.AtomicInteger()
     val done = new CountDownLatch(empty.size)
     empty.foreach { case (x, y) =>
       pool.execute(new Runnable {
@@ -22,8 +26,8 @@ class Layout(m: Int, n: Int) {
           val copy = new Board(m, n)
           val moves = piece.moves(x, y, copy)
           copy.put(x, y, piece, moves)
-          val paths = worker(copy, List(((x, y), piece)), pieces.tail)
-          q.put(paths)
+          val count = worker(copy, List(((x, y), piece)), pieces.tail)
+          counter.addAndGet(count)
           done.countDown()
         }
       })
@@ -31,42 +35,30 @@ class Layout(m: Int, n: Int) {
     done.await()
     pool.shutdown()
 
-    val indexes = new collection.mutable.HashSet[Long]()
-    val result = q.toList.flatten
-    Console printf("Total (not uniqie): %s\n", result.size)
-    result.filter { p =>
-      val hashCode = java.util.Arrays.hashCode(
-        p.map { case ((x, y), piece) =>
-          (x, y, piece.code)
-        }.sorted.map { case (x, y, w) => List[Int](x, y, w) }.flatten.toArray
-      )
-
-      if (indexes.contains(hashCode)) false
-      else {
-        indexes.add(hashCode)
-        true
-      }
-    }
+    counter.get()
   }
 
   def worker(board: Board, path: Path, pieces: List[Piece]) = {
-    def place(board: Board, path: Path, pieces: List[Piece]): List[Path] = {
+    def place(board: Board, path: Path, pieces: List[Piece]): Int = {
       val piece = pieces.head
-      board.emptyCells.foldLeft[List[Path]](List.empty) { case (result, (x, y)) =>
+      val ((prevx, prevy), prev) = path.head
+      val empty = board.emptyCells
+      empty.foldLeft[Int](0) { case (count, (x, y)) =>
         val moves = piece.moves(x, y, board)
         val newPath = ((x, y), piece) :: path
-        if (board.put(x, y, piece, moves)) {
+        if (piece == prev && x * n + y < prevx * n + prevy) count // skip
+        else if (board.put(x, y, piece, moves)) {
           try {
-            if (pieces.tail.isEmpty) {
-              newPath :: result // no pieces left
-            } else if (board.isFull)
-              result
+            if (pieces.tail.isEmpty)
+              count + 1 // no pieces left
+            else if (board.isFull)
+              count
             else
-              place(board, newPath, pieces.tail) ::: result
+              count + place(board, newPath, pieces.tail)
           } finally {
             board.reset(x, y, moves)
           }
-        } else result
+        } else count
       }
     }
     place(board, path, pieces)

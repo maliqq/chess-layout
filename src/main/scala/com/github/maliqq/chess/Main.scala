@@ -17,28 +17,13 @@ object Main {
     }
 
     val layout = new Layout(m, n)
-    val paths = layout.place(pieces.sortBy(_.weight).reverse)
+    val count = layout.place(pieces)
 
-    if (paths.size == 0) {
+    if (count == 0) {
       Console println("There is no solution")
       return
     }
 
-    Console printf("Solution with %s layouts (including symmetric)\n", paths.size)
-
-    val limit = 5
-    if (paths.size > limit) Console printf("First %s are below:\n", limit)
-    else Console println("All layouts are below:")
-
-    implicit def path2board(p: Path): Board = {
-      val b = new Board(m, n)
-      p.foreach { case ((x, y), piece) => b.set(x, y, piece) }
-      b
-    }
-
-    paths.take(limit).foreach { path =>
-      val board = path: Board
-      Console println(board.toString)
-    }
+    Console printf("Solution with %s layouts (including symmetric)\n", count)
   }
 }
