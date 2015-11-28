@@ -3,15 +3,13 @@ package com.github.maliqq.chess
 class Layout(m: Int, n: Int) {
   class NoSolutionException extends Exception
 
-  implicit def path2board(p: Path): RawBoard = new RawBoard(m, n, p)
-
   import collection.JavaConversions._
   import java.util.concurrent._
 
   lazy val workersNum = Runtime.getRuntime().availableProcessors()
   lazy val pool = Executors.newFixedThreadPool(workersNum)
 
-  def place(pieces: List[Piece]): List[RawBoard] = {
+  def place(pieces: List[Piece]): List[Path] = {
     val board = new Board(m, n)
     val piece = pieces.head
     val q = new LinkedBlockingQueue[List[Path]]()
@@ -27,17 +25,27 @@ class Layout(m: Int, n: Int) {
           val paths = worker(copy, List(((x, y), piece)), pieces.tail)
           q.put(paths)
           done.countDown()
-          Console printf("STOP %s %s - %s%% done\n", (x, y), paths.size, (1 - done.getCount().toFloat / empty.size) * 100)
         }
       })
     }
     done.await()
     pool.shutdown()
 
-    q.toList.flatten.map { path =>
-      path: RawBoard
-    }.foldRight(List[RawBoard]()) { case (b, uniq) =>
-      if (uniq.exists(_.equals(b))) uniq else b :: uniq
+    val indexes = new collection.mutable.HashSet[Long]()
+    val result = q.toList.flatten
+    Console printf("Total (not uniqie): %s\n", result.size)
+    result.filter { p =>
+      val hashCode = java.util.Arrays.hashCode(
+        p.map { case ((x, y), piece) =>
+          (x, y, piece.code)
+        }.sorted.map { case (x, y, w) => List[Int](x, y, w) }.flatten.toArray
+      )
+
+      if (indexes.contains(hashCode)) false
+      else {
+        indexes.add(hashCode)
+        true
+      }
     }
   }
 
@@ -49,12 +57,12 @@ class Layout(m: Int, n: Int) {
         val newPath = ((x, y), piece) :: path
         if (board.put(x, y, piece, moves)) {
           try {
-            if (pieces.tail.isEmpty)
+            if (pieces.tail.isEmpty) {
               newPath :: result // no pieces left
-            else if (board.isFull)
+            } else if (board.isFull)
               result
             else
-              place(board, newPath, pieces.tail) ++ result
+              place(board, newPath, pieces.tail) ::: result
           } finally {
             board.reset(x, y, moves)
           }

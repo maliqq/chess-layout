@@ -5,6 +5,7 @@ abstract class Piece {
   def weight: Int
   def white: Char
   def black: Char
+  def code: Int
   override def toString = black.toString
 }
 
@@ -34,6 +35,7 @@ object Pieces {
 
     def white = '♔'
     def black = '♚'
+    def code: Int = 'K'
   }
 
   sealed case class Queen extends Piece with Moves.Diagonal with Moves.Direct {
@@ -42,6 +44,7 @@ object Pieces {
 
     def white = '♕'
     def black = '♛'
+    def code: Int = 'Q'
   }
 
   sealed case class Rook extends Piece with Moves.Direct {
@@ -50,6 +53,7 @@ object Pieces {
 
     def white = '♖'
     def black = '♜'
+    def code: Int = 'R'
   }
 
   sealed case class Bishop extends Piece with Moves.Diagonal {
@@ -58,6 +62,7 @@ object Pieces {
 
     def white = '♗'
     def black = '♝'
+    def code: Int = 'B'
   }
 
   sealed case class Knight extends Piece {
@@ -80,6 +85,7 @@ object Pieces {
 
     def white = '♘'
     def black = '♞'
+    def code: Int = 'N'
   }
 
 }

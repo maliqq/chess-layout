@@ -34,35 +34,6 @@ trait AsciiPrint {
 
 case class Put(x: Int, y: Int, piece: Piece)
 
-class RawBoard(val m: Int, val n: Int, p: Path) extends AsciiPrint {
-  private val size = m * n
-  private val matrix: Array[Option[Piece]] = Array.fill(size) { None }
-  private def set(x: Int, y: Int, piece: Piece) {
-    matrix(x * m + y) = Some(piece)
-  }
-  p.foreach { case ((x, y), piece) =>
-    set(x, y, piece)
-  }
-  lazy val index: String = {
-    val s = new StringBuilder
-    def buildString(x: Int, y: Int) = get(x, y) match {
-      case Some(piece) => s.append(piece.black)
-      case None => s.append('-')
-    }
-    val flat = for {
-      x <- 0 to m - 1;
-      y <- 0 to n - 1
-    } yield(buildString(x, y))
-    s.toString
-  }
-  
-  def isAimed(x: Int, y: Int) = false
-  
-  def get(x: Int, y: Int): Option[Piece] = matrix(x * m + y)
-  
-  def equals(other: RawBoard) = index == other.index
-}
-
 class Board(val m: Int, val n: Int) extends Aiming with AsciiPrint {
   private val matrix: Array[Array[Option[Piece]]] = Array.fill(m) {
     Array.fill(n) { None }
